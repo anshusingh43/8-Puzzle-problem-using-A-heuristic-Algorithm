@@ -1,0 +1,23 @@
+package demo1.java;
+
+public class Node {
+
+	public Node parent;
+	public int[] currrentState;
+	
+	// Number of misplaced tiles
+	public int cost;
+	
+	public int depth;
+	// The number of moves so far
+	public int count;
+	
+	public Node(Node parent, int[] currrentState, int count, int depth, int cost) {
+		this.parent = parent;
+		this.currrentState = currrentState.clone();
+		this.cost = cost;
+		this.depth = depth;
+		this.count = count;
+	}
+	
+}

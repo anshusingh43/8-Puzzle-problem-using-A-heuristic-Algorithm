@@ -1,0 +1,346 @@
+package demo1.java;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.PriorityQueue;
+import java.util.Scanner;
+
+/**
+ * Final --- program to implement A* algorithm 
+ * using Misplaced tiles and Manhattan distance.
+ * @author    Dipesh Chakrani, Anshu Singh
+ */
+public class Final {
+
+	
+	/**
+	 * Prints out best possible Path 
+	 * from Initial state to goal state
+	 * @param arg A string array containing
+	 * @return No return value.
+	 */ 
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+		@SuppressWarnings("resource")
+		Scanner input = new Scanner(System.in);
+		int initial []= new int[9]; 							// {1,2,3,7,4,5,6,8,0};	
+		int goal []= new int[9]; 								//{1,2,3,8,6,4,7,5,0};
+		Node root = null;
+		int countNodes = 1, PositionZero;
+		
+		System.out.println("Enter the Initial state.");			//Asking for initial state
+		
+		//Initial state output
+        for (int i = 0 ; i < initial.length; i++ ) {
+        	initial[i] = input.nextInt();
+        }
+        System.out.println("Enter the Goal state.");			//Asking for Goal state
+        
+        //goal state input
+        for (int i = 0 ; i < goal.length; i++ ) {
+        	goal[i] = input.nextInt();
+        }
+        
+        System.out.println("Choose Heuristic function: ");		//Option for Heuristic funcition
+        System.out.println("1) Misplaces Tiles");
+        System.out.println("2) Manhattan Distance");
+        int heuristic = input.nextInt();
+		
+		List<Node> expandedNodes = new ArrayList<Node>();															//List to store all the nodes for checking already expanded nodes
+		PriorityQueue<Node> fringe = new PriorityQueue<Node>(1000, (a, b) -> (a.cost + a.depth) - (b.cost + b.depth));	//Fringe to store unexplored nodes
+		if (heuristic != 1) {
+			root = new Node(null, initial, countNodes++, 0, heuristicMisplacedTiles(initial, goal));				//Adding parent node Misplaced tiles
+		}
+		if (heuristic != 2) {
+			root = new Node(null, initial, countNodes++, 0, heuristicManhattanDistance(initial, goal));				//Adding parent node Manhattan distance
+		}
+		expandedNodes.add(root);
+		fringe.add(root);																							//Adding Parent to fringe
+		
+		while (!fringe.isEmpty()) {
+			Node min = fringe.poll();																					//Expanding node having minimum f(n) (Heuristic + Traversing cost) from the fringe
+			if (min.cost == 0) {																					//Check for goal state
+				System.out.println("Printing Path");
+				int depth = min.depth;
+				printPath(min);																						//Print Path
+				System.out.println("Total Nodes Explored: " + (countNodes - 1));
+				System.out.println("Total No of Nodes generated: " + expandedNodes.size());
+				System.out.println("Depth: " + depth);
+				return;
+			}	
+			PositionZero = position(min.currrentState, goal);														//Finding position of Zero
+			if (PositionZero == -1)
+			{
+				System.out.println("incorrect Initial state");
+			}
+			else
+				countNodes = movingtile(root, min, PositionZero, countNodes, goal, fringe, expandedNodes, heuristic);	//Function to check for possible expansion
+		}
+	}
+
+	/**
+	 * Traversing to parent note
+	 * Calling print method to print path
+	 * Prints best path from root to goal state.
+	 * @param Node A Node referencing to goal node
+	 * @return No return value.
+	 */ 
+	private static void printPath(Node root) {
+		// TODO Auto-generated method stub
+		if (root == null) {
+			return;
+		}
+		printPath(root.parent);
+		printMatrix(root.currrentState);
+		System.out.println();
+	}
+
+	/**
+	 * Prints best path from root to goal state
+	 * modifies 1D array to display it in 2D
+	 * @param root An array of states
+	 * @return No return value.
+	 */
+	private static void printMatrix(int[] root) {
+		// TODO Auto-generated method stub
+		for(int j = 1; j<root.length+1; j++)
+		    {
+		        System.out.print(root[j-1] + "  ");
+		        if(j % 3 == 0) {
+		        	System.out.println();
+		        }
+		    }
+	}
+
+	/**
+	 * Calculating Heuristic - Misplaced tiles
+	 * @param current An array consisting of current state
+	 * @param goal An array consisting of goal state
+	 * @return Count An integer containing Heuristic cost
+	 */
+	private static int heuristicMisplacedTiles(int[] current, int[] goal) {
+		// TODO Auto-generated method stub
+		int count = 0;
+		for (int i = 0; i < current.length; i++) {
+			if(current[i] != 0 && current[i] != goal[i]) {
+				count++;
+			}
+		}
+		return count;
+	}
+
+	/**
+	 * Calculating Heuristic - Manhattan Distance
+	 * @param current An array consisting of current state
+	 * @param goal An array consisting of goal state
+	 * @return Count An integer containing Heuristic cost
+	 */
+	private static int heuristicManhattanDistance(int[] current, int[] goal) {
+		// TODO Auto-generated method stub
+		int count = 0;
+		for (int i = 0; i < current.length; i++) {
+			if(current[i] != 0 && current[i] != goal[i]) {
+				for (int j = 0; j < current.length; j++) {
+					if(current[i] == goal[j]) {
+						count += Math.abs(j-i);
+					}
+				}
+			}
+		}
+		return count;
+	}
+	
+	/**
+	 * Finding position of 0 in array
+	 * @param current An array consisting of current state
+	 * @param goal An array consisting of goal state
+	 * @return Count An integer containing position of Zero
+	 */
+	public static int position(int current[], int goal[]) {
+	  //finding the position of the empty spaces
+	       for ( int i = 0; i < current.length; ++i ) {
+	    	   if ( current[i]== 0 ) {
+	    		   return i;
+	    		   }	
+	       }
+		return -1;
+	}
+	
+	/**
+	 * Finding expansion nodes
+	 * @param root An node containing parent
+	 * @param min An node containing current state
+	 * @param posi An integer containing position of zero
+	 * @param countNodes An integer to count expanded nodes
+	 * @param fringe Priority queue having unexplored nodes
+	 * @param expandedNodes List having explored nodes
+	 * @param heuristic An integer containing heuristic value
+	 * @return countNodes An integer to count expanded nodes
+	 */
+	public static int movingtile(Node root, Node min ,int posi,int countNodes, int goal[], PriorityQueue<Node> fringe, List<Node> expandedNodes, int heuristic ) {//passing position of zero 
+		int initial[] = min.currrentState;
+		int[] child1 = new int [initial.length];
+        int[] child2 = new int [initial.length];
+        int[] child3 = new int [initial.length];
+        int[] child4 = new int [initial.length];
+        int swap;
+        Node Child = null;
+      	  if(posi==0 || posi==3 || posi==6) {//Moving tile to right not possible
+      		  //do nothing
+      	  }
+      	  else {
+      		  child1 = copying(initial, child1, posi);
+      		  swap = child1[posi];											//Moving Tile
+      		  child1[posi] = child1[posi-1];
+      		  child1[posi-1]=swap;
+      		  
+      		  boolean VisitedNode = checkingState(child1, expandedNodes);
+    			if (!VisitedNode) {
+      			  if (heuristic != 1) {
+      				  Child = new Node(min, child1, countNodes++, min.depth + 1, heuristicMisplacedTiles(child1, goal));		//Adding root state Misplaced tiles
+      				  }
+      			  if (heuristic != 2) {
+      				  Child = new Node(min, child1, countNodes++, min.depth + 1, heuristicManhattanDistance(child1, goal));		//Adding root state Manhattan Distance
+      				  }
+      			  fringe.add(Child);
+      			  expandedNodes.add(Child);
+      		  }
+      		  
+      	  }
+      	  
+      	  if(posi==2 || posi==5 || posi==8) {//Moving tile to left not possible
+      		  
+      	  }
+      	  else {
+      		  child2 = copying(initial, child2, posi);
+      		  swap = child2[posi];										//Moving Tile
+    		  child2[posi] = child2[posi+1];
+    		  child2[posi+1]=swap;
+      		  boolean VisitedNode = checkingState(child2, expandedNodes);
+      		if (!VisitedNode) {
+     			 if (heuristic != 1) {
+     				  Child = new Node(min, child2, countNodes++, min.depth + 1, heuristicMisplacedTiles(child2, goal));		//Adding root state Misplaced tiles
+     				  }
+     			  if (heuristic != 2) {
+     				  Child = new Node(min, child2, countNodes++, min.depth + 1, heuristicManhattanDistance(child2, goal));		//Adding root state Manhattan Distance
+     				  }
+     			  fringe.add(Child);
+     		  	  expandedNodes.add(Child);
+     		  }
+      	  }
+      	  
+      	  if(posi==0 || posi==1 || posi==2) {//Moving tile down not possible
+      		  
+      	  }
+      	  else {
+      		  child3 = copying(initial, child3, posi);
+      		  swap = child3[posi];										//Moving Tile
+      		  child3[posi] = child3[posi-3];
+      		  child3[posi-3]=swap;
+      		  boolean VisitedNode = checkingState(child3, expandedNodes);
+      		if (!VisitedNode) {
+     			 if (heuristic != 1) {
+     				  Child = new Node(min, child3, countNodes++, min.depth + 1, heuristicMisplacedTiles(child3, goal));		//Adding root state Misplaced tiles
+     				  }
+     			  if (heuristic != 2) {
+     				  Child = new Node(min, child3, countNodes++, min.depth + 1, heuristicManhattanDistance(child3, goal));		//Adding root state Manhattan Distance
+     				  }
+     			  fringe.add(Child);
+     		  	  expandedNodes.add(Child);
+     		  }
+      	  }
+      	  
+      	  if(posi==6 || posi==7 || posi==8) {//Moving tile up not possible
+      		  
+      	  }
+      	  else {
+      		  child4 = copying(initial, child4, posi);
+      		  swap = child4[posi];										//Moving Tile
+      		  child4[posi] = child4[posi+3];
+      		  child4[posi+3]=swap;
+      		  boolean VisitedNode = checkingState(child4, expandedNodes);
+      		if (!VisitedNode) {
+     			 if (heuristic != 1) {
+     				  Child = new Node(min, child4, countNodes++, min.depth + 1, heuristicMisplacedTiles(child4, goal));		//Adding root state Misplaced tiles
+     				  }
+     			  if (heuristic != 2) {
+     				  Child = new Node(min, child4, countNodes++, min.depth + 1, heuristicManhattanDistance(child4, goal));		//Adding root state Manhattan Distance
+     				  }
+     			  fringe.add(Child);
+     			 
+     		  	  expandedNodes.add(Child);
+     		  }
+      	  }
+      	  
+      	//Uncomment to print current and child nodes
+      	/*System.out.println("Current: ");
+        for(int j = 1; j<initial.length+1; j++)
+	    {
+	        System.out.print(initial[j-1] + "  ");
+	        if(j % 3 == 0) {
+	        	System.out.println();
+	        }
+	    }
+      	 for(int i = 1; i<10; i=i+3)  
+  		{
+      		for(int j = i; j<i+3; j++)
+		    {
+		        System.out.print(child1[j-1] + "  ");
+		    }
+      		System.out.print(" |  ");
+      		for(int j = i; j<i+3; j++)
+		    {
+		        System.out.print(child2[j-1] + "  ");
+		    }
+      		System.out.print(" |  ");
+      		for(int j = i; j<i+3; j++)
+		    {
+		        System.out.print(child3[j-1] + "  ");
+		    }
+      		System.out.print(" |  ");
+      		for(int j = i; j<i+3; j++)
+		    {
+      			System.out.print(child4[j-1] + "  ");
+      			if(j % 3 == 0) {
+		        	System.out.println();
+		        }
+		    }
+  		}*/
+		return countNodes;
+	}
+	
+	/**
+	 * Checking for already visited node1 2 3 7 4 5 6 8 0
+	 * @param current An array consisting of current state
+	 * @param expandedNodes An arrayList 
+	 * having all expanded nodes
+	 * @return boolean An boolean to notify for match
+	 */
+	private static boolean checkingState(int[] current, List<Node> expandedNodes) {
+		// TODO Auto-generated method stub
+		Node check;
+		for(int i = 0; i<expandedNodes.size(); i++) {
+			check = expandedNodes.get(i);
+			if(Arrays.equals(current, check.currrentState)) {
+				expandedNodes.add(check);
+				return true;
+			}
+    		}
+		return false;
+	}
+
+	/**
+	 * Copy Current state to child state
+	 * @param current An array consisting of current state
+	 * @param newChild An empty array to copy element 
+	 * @param posi An integer containing position of zero
+	 * @return newChild An child array
+	 */
+    public static int[] copying(int current[],int newChild[], int posi) {
+    	for(int i = 0; i<current.length; i++) {
+    		newChild[i]=current[i];
+    		}
+    	return newChild;
+    	}
+}
